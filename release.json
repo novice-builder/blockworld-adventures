@@ -1,0 +1,8 @@
+{
+  "build": "adventures-r3-7bc2f55223fd5688",
+  "sourceCommit": "bf51e71b3b5849d08773bb9a8c3172de83646a1f",
+  "sourceArchiveCommit": "99d922c1fa566a086bcbe9ddf851d98d4e4c19cd",
+  "originalRun3BuildId": "7bc2f55223fd5688",
+  "distribution": "Self-contained Run 3 compiled game repackaged for isolated BlockWorld Adventures PWA; Run 4 fixes not included",
+  "sourceDirty": false
+}
