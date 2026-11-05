@@ -1,8 +1,8 @@
 {
-  "build": "adventures-r3-7bc2f55223fd5688",
-  "sourceCommit": "bf51e71b3b5849d08773bb9a8c3172de83646a1f",
-  "sourceArchiveCommit": "99d922c1fa566a086bcbe9ddf851d98d4e4c19cd",
-  "originalRun3BuildId": "7bc2f55223fd5688",
-  "distribution": "Self-contained Run 3 compiled game repackaged for isolated BlockWorld Adventures PWA; Run 4 fixes not included",
-  "sourceDirty": false
+  "build": "adventures-main-preview03-eb7003e",
+  "release": "Preview 03 \u2014 Willow Vale",
+  "sourceCommit": "eb7003e7fca9273882e1acf9af798b457a3a4bf5",
+  "archiveCommit": "59aba9022fdd21da26c77d1d7a8f2017b425aebb",
+  "assetCount": 105,
+  "deployedAs": "main website, with Preview 02/03 unchanged"
 }

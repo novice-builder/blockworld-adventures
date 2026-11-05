@@ -2,13 +2,13 @@
   "id": "./?app=blockworld-adventures",
   "name": "BlockWorld Adventures",
   "short_name": "BlockWorld",
-  "description": "Build anything. Explore everywhere. A creative 3D world.",
+  "description": "Build anything. Explore everywhere.",
   "start_url": "./",
   "scope": "./",
   "display": "fullscreen",
-  "orientation": "landscape",
+  "orientation": "any",
   "background_color": "#f7f1df",
-  "theme_color": "#244f4b",
+  "theme_color": "#243c35",
   "icons": [
     {
       "src": "./icon-192.png",
