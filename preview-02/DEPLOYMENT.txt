@@ -1,0 +1,1 @@
+Preview 02 · source commit b6546e873dc8bbd1f723ce917fa2a6e43b3bfd7e · archive 9f07d29ae458be7ddba5a88ff81c85aa73172385 · SHA256 5b19cb7e2feaebe8ef0ae112e44d6ca1c276014f83e9e84f340c7601a8e7be3a. New web origin/path has independent browser saves. Preview 02 does not include an offline service worker.
