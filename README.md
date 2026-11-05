@@ -25,3 +25,9 @@ Preview 02 is published separately at https://novice-builder.github.io/blockworl
 This is a new standalone village/woodland/meadow prototype based on 71 CC0 assets; it does NOT replace the Run 3 root game. It is an online browser preview, not yet an offline-installable PWA. Its saved worlds are independent of the Run 3 site. Buildings are exterior-only, and physical iPhone/Android performance remains unverified. Keep portable backups of important creations.
 
 Provenance: [Preview 02 source archive](https://github.com/novice-builder/object-builder/tree/9f07d29ae458be7ddba5a88ff81c85aa73172385/blockworld2/artifacts/adventures-v2) and [actual rendered screenshot gallery](https://github.com/novice-builder/object-builder/blob/9f07d29ae458be7ddba5a88ff81c85aa73172385/blockworld2/docs/adventures-v2/GALLERY.md).
+
+## Playable Preview 03 — Connected Willow Vale
+
+Preview 03 is published separately at https://novice-builder.github.io/blockworld-adventures/preview-03/ . It combines Willowmere village, Whispering Wood and Maker's Meadow into a single connected 370×196 m world with a live minimap and an interactive full map with landmark teleportation. Previous Preview 02 and the Run 3 root game remain available at their original links. This is an online preview, not an offline-installable PWA; iPhone/Lenovo performance remains unverified. Browser-origin saved worlds are not transferred automatically, so keep and export backups.
+
+Source: [verified Preview 03 package](https://github.com/novice-builder/object-builder/tree/59aba9022fdd21da26c77d1d7a8f2017b425aebb/blockworld2/artifacts/adventures-v3); [actual rendered screenshots and report](https://github.com/novice-builder/object-builder/blob/59aba9022fdd21da26c77d1d7a8f2017b425aebb/blockworld2/docs/adventures-v3/GALLERY.md).
