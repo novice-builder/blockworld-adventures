@@ -75,6 +75,7 @@ jobs:
           git config user.name "BlockWorld Preview Publisher"
           git config user.email "251833594+novice-builder@users.noreply.github.com"
           git add preview-02
-          git diff --cached --check
+          # Preserve third-party licence and report text byte-for-byte; some have upstream trailing spaces.
+          git diff --cached --name-only | grep -q '^preview-02/'
           git commit -m "Publish isolated BlockWorld Adventures Preview 02 static files"
           git push origin HEAD:main
