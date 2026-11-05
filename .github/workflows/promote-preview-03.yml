@@ -73,8 +73,8 @@ jobs:
             'assetCount':len(files),'deployedAs':'main website, with Preview 02/03 unchanged'
           },indent=2)+'\n')
           scope='./'
-          offline_files=['./','./index.html','./manifest.webmanifest','./release.json',
-                         './'+name for name in files if name != 'manifest.webmanifest']
+          offline_files=['./','./index.html','./manifest.webmanifest','./release.json'] + [
+              './'+name for name in files if name != 'manifest.webmanifest']
           offline_files=list(dict.fromkeys(offline_files))
           worker=r"""/* Main BlockWorld Adventures: pinned Preview 03 release. */
           const PREFIX='bwa:main:'+encodeURIComponent(self.registration.scope)+':';
@@ -96,7 +96,7 @@ jobs:
             const url=new URL(e.request.url);
             if(url.origin!==self.location.origin||!url.href.startsWith(self.registration.scope))return;
             const path=url.pathname.slice(new URL(self.registration.scope).pathname.length);
-            if(/^preview-\\d+\\//.test(path))return;
+            if(path.startsWith('preview-'))return;
             if(e.request.mode==='navigate'){
               e.respondWith((async()=>{
                 try{const r=await fetch(e.request);if(r.ok)return r;}catch{}
@@ -136,7 +136,7 @@ jobs:
           The original Neighborhood 06 and object-builder GitHub Pages website are unaffected.
           """.replace('\n          ','\n').lstrip())
           assert pathlib.Path('index.html').read_text().count('register("./sw.js"')==1
-          assert (pathlib.Path('assets')/pathlib.Path(source_html.split('src="./assets/')[1].split('"')[0])).exists() is False if False else True
+          assert pathlib.Path('assets',source_html.split('src="./assets/')[1].split('"')[0]).is_file(), 'Main bundle missing'
           print('Verified and copied',len(files),'original assets, promoted Preview 03 root web app.')
           PY
       - name: Commit root promotion (keep preview directories untouched)
