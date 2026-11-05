@@ -19,6 +19,9 @@ self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
   if (!url.href.startsWith(self.registration.scope) || url.origin !== self.location.origin) return;
+  // Do not rewrite or cache navigations belonging to independently hosted previews.
+  // Each preview has its own URL and storage; the Run 3 root app remains unchanged.
+  if (url.pathname.startsWith(new URL('preview-02/', self.registration.scope).pathname)) return;
   const path = './' + url.pathname.slice(new URL(self.registration.scope).pathname.length);
   if (!FILES.includes(path) && event.request.mode !== 'navigate') return;
   event.respondWith((async () => {
