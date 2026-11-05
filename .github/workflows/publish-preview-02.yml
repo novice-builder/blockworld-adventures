@@ -1,0 +1,80 @@
+name: Publish Preview 02
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/publish-preview-02.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  publish:
+    name: Verify package and publish isolated preview
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Download pinned verified release
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="https://raw.githubusercontent.com/novice-builder/object-builder/9f07d29ae458be7ddba5a88ff81c85aa73172385/blockworld2/artifacts/adventures-v2"
+          curl --fail --location --retry 3 --silent --show-error "$BASE/BlockWorld-Adventures-Preview-02.zip" --output /tmp/bwa-preview02.zip
+          curl --fail --location --retry 3 --silent --show-error "$BASE/BUILD.json" --output /tmp/bwa-preview02-build.json
+          echo "5b19cb7e2feaebe8ef0ae112e44d6ca1c276014f83e9e84f340c7601a8e7be3a  /tmp/bwa-preview02.zip" | sha256sum -c -
+          echo "35dfc4147e0b3337dddab4c664c6022c7767faf50b2070e47828d244ab5b78a0  /tmp/bwa-preview02-build.json" | sha256sum -c -
+      - name: Extract and verify every runtime file
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib, html, json, pathlib, shutil, zipfile
+          archive=pathlib.Path('/tmp/bwa-preview02.zip')
+          manifest=json.loads(pathlib.Path('/tmp/bwa-preview02-build.json').read_text())
+          assert manifest['version']=='Adventures-Preview-02'
+          assert manifest['sourceCommit']=='b6546e873dc8bbd1f723ce917fa2a6e43b3bfd7e'
+          expected=manifest['files']
+          assert len(expected)==105, f'Unexpected runtime file count: {len(expected)}'
+          dst=pathlib.Path('preview-02')
+          assert not dst.exists(), 'Preview 02 already exists: do not overwrite'
+          with zipfile.ZipFile(archive) as z:
+              assert z.testzip() is None
+              files=[item for item in z.infolist() if not item.is_dir()]
+              roots={item.filename[:-len('adventures.html')] for item in files if item.filename.endswith('adventures.html')}
+              assert len(roots)==1, f'Cannot uniquely identify archive root: {roots}'
+              root=roots.pop()
+              names={item.filename for item in files}
+              assert all(root+name in names for name in expected), 'Archive missing a runtime asset'
+              for name, meta in expected.items():
+                  raw=z.read(root+name)
+                  assert len(raw)==meta['bytes'], f'Length mismatch: {name}'
+                  assert hashlib.sha256(raw).hexdigest()==meta['sha256'], f'Checksum mismatch: {name}'
+              for item in files:
+                  assert item.filename.startswith(root), 'Unexpected external archive entry'
+                  relative=item.filename[len(root):]
+                  p=pathlib.PurePosixPath(relative)
+                  if not relative or p.is_absolute() or '..' in p.parts or '\\' in relative:
+                      raise ValueError(f'Unsafe archive member: {relative}')
+                  if relative=='preview.py' or relative=='README.txt':
+                      continue
+                  target=dst.joinpath(*p.parts)
+                  target.parent.mkdir(parents=True,exist_ok=True)
+                  with z.open(item) as source, target.open('wb') as output:
+                      shutil.copyfileobj(source,output)
+          assert (dst/'adventures.html').is_file() and (dst/'manifest.webmanifest').is_file()
+          (dst/'index.html').write_text('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="refresh" content="0;url=./adventures.html"><title>BlockWorld Adventures — Preview 02</title></head><body><p><a href="./adventures.html">Open BlockWorld Adventures — Preview 02</a></p></body></html>\n')
+          (dst/'DEPLOYMENT.txt').write_text('Preview 02 · source commit b6546e873dc8bbd1f723ce917fa2a6e43b3bfd7e · archive 9f07d29ae458be7ddba5a88ff81c85aa73172385 · SHA256 5b19cb7e2feaebe8ef0ae112e44d6ca1c276014f83e9e84f340c7601a8e7be3a. New web origin/path has independent browser saves. Preview 02 does not include an offline service worker.\n')
+          print('Validated',len(expected),'runtime files; published',sum(1 for x in dst.rglob('*') if x.is_file()),'static files')
+          PY
+      - name: Commit static preview into existing Pages branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "BlockWorld Preview Publisher"
+          git config user.email "251833594+novice-builder@users.noreply.github.com"
+          git add preview-02
+          git diff --cached --check
+          git commit -m "Publish isolated BlockWorld Adventures Preview 02 static files"
+          git push origin HEAD:main
