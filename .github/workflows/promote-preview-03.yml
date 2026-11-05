@@ -1,0 +1,155 @@
+name: Promote Preview 03 to Main Game
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/promote-preview-03.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Download pinned build manifest
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 --silent --show-error \
+            'https://raw.githubusercontent.com/novice-builder/object-builder/59aba9022fdd21da26c77d1d7a8f2017b425aebb/blockworld2/artifacts/adventures-v3/BUILD.json' \
+            --output /tmp/preview03-build.json
+      - name: Verify existing Preview 03 and install its game at site root
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib,json,pathlib,shutil
+          manifest=json.loads(pathlib.Path('/tmp/preview03-build.json').read_text())
+          assert manifest['version']=='Adventures-Preview-03'
+          assert manifest['sourceCommit']=='eb7003e7fca9273882e1acf9af798b457a3a4bf5'
+          files=manifest['files']
+          assert len(files)==105, 'Unexpected release asset count'
+          preview=pathlib.Path('preview-03')
+          assert (preview/'DEPLOYMENT.txt').is_file() and (preview/'adventures.html').is_file()
+          for name,meta in files.items():
+              rel=pathlib.PurePosixPath(name)
+              assert not rel.is_absolute() and '..' not in rel.parts
+              source=preview.joinpath(*rel.parts)
+              raw=source.read_bytes()
+              assert len(raw)==meta['bytes'],f'Size mismatch: {name}'
+              assert hashlib.sha256(raw).hexdigest()==meta['sha256'],f'Hash mismatch: {name}'
+              target=pathlib.Path(*rel.parts)
+              target.parent.mkdir(parents=True,exist_ok=True)
+              shutil.copyfile(source,target)
+          source_html=(preview/'adventures.html').read_text()
+          assert '<div id="app"></div>' in source_html and 'assets/adventures-' in source_html
+          assert '<link rel="icon" href="./icon.svg" />' in source_html
+          homepage=source_html.replace(
+              '<link rel="icon" href="./icon.svg" />',
+              '<link rel="icon" href="./icon.svg" />\n    <link rel="manifest" href="./manifest.webmanifest" />\n    <link rel="apple-touch-icon" href="./icon-180.png" />\n    <meta name="apple-mobile-web-app-capable" content="yes" />\n    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />'
+          ).replace('<title>BlockWorld Adventures · Willowmere</title>','<title>BlockWorld Adventures</title>')
+          # Register the isolated offline worker while preserving the game bundle and DOM.
+          homepage=homepage.replace('</body>','  <script>if ("serviceWorker" in navigator && location.protocol === "https:") { navigator.serviceWorker.register("./sw.js", {scope:"./",updateViaCache:"none"}).catch(() => {}); }</script>\n  </body>')
+          pathlib.Path('index.html').write_text(homepage)
+          app_manifest={
+            'id':'./?app=blockworld-adventures','name':'BlockWorld Adventures',
+            'short_name':'BlockWorld','description':'Build anything. Explore everywhere.',
+            'start_url':'./','scope':'./','display':'fullscreen','orientation':'any',
+            'background_color':'#f7f1df','theme_color':'#243c35',
+            'icons':[
+               {'src':'./icon-192.png','sizes':'192x192','type':'image/png','purpose':'any'},
+               {'src':'./icon-512.png','sizes':'512x512','type':'image/png','purpose':'any'}
+            ]
+          }
+          pathlib.Path('manifest.webmanifest').write_text(json.dumps(app_manifest,indent=2)+'\n')
+          release_id='adventures-main-preview03-eb7003e'
+          pathlib.Path('release.json').write_text(json.dumps({
+            'build':release_id,'release':'Preview 03 — Willow Vale',
+            'sourceCommit':manifest['sourceCommit'],
+            'archiveCommit':'59aba9022fdd21da26c77d1d7a8f2017b425aebb',
+            'assetCount':len(files),'deployedAs':'main website, with Preview 02/03 unchanged'
+          },indent=2)+'\n')
+          scope='./'
+          offline_files=['./','./index.html','./manifest.webmanifest','./release.json',
+                         './'+name for name in files if name != 'manifest.webmanifest']
+          offline_files=list(dict.fromkeys(offline_files))
+          worker=r"""/* Main BlockWorld Adventures: pinned Preview 03 release. */
+          const PREFIX='bwa:main:'+encodeURIComponent(self.registration.scope)+':';
+          const LEGACY='bw2:development:'+encodeURIComponent(self.registration.scope)+':';
+          const CACHE=PREFIX+BUILD_ID;
+          const FILES=FILE_LIST;
+          self.addEventListener('install',e=>{
+            e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES)).then(()=>self.skipWaiting()));
+          });
+          self.addEventListener('activate',e=>{
+            e.waitUntil((async()=>{
+              const old=await caches.keys();
+              await Promise.all(old.filter(k=>k!==CACHE&&(k.startsWith(PREFIX)||k.startsWith(LEGACY))).map(k=>caches.delete(k)));
+              await self.clients.claim();
+            })());
+          });
+          self.addEventListener('fetch',e=>{
+            if(e.request.method!=='GET')return;
+            const url=new URL(e.request.url);
+            if(url.origin!==self.location.origin||!url.href.startsWith(self.registration.scope))return;
+            const path=url.pathname.slice(new URL(self.registration.scope).pathname.length);
+            if(/^preview-\\d+\\//.test(path))return;
+            if(e.request.mode==='navigate'){
+              e.respondWith((async()=>{
+                try{const r=await fetch(e.request);if(r.ok)return r;}catch{}
+                const c=await caches.open(CACHE);
+                return (await c.match(new URL('index.html',self.registration.scope).href))||Response.error();
+              })());
+            }else if(FILES.includes('./'+path)){
+              e.respondWith((async()=>{const c=await caches.open(CACHE);return (await c.match(e.request))||fetch(e.request);})());
+            }
+          });
+          """
+          worker=worker.replace('BUILD_ID',json.dumps(release_id)).replace('FILE_LIST',json.dumps(offline_files))
+          worker='\n'.join(line.strip() for line in worker.splitlines())+'\n'
+          pathlib.Path('sw.js').write_text(worker)
+          pathlib.Path('README.md').write_text("""# BlockWorld Adventures
+
+          **Build anything. Explore everywhere.**
+
+          The root GitHub Pages site now hosts the verified **Preview 03 — connected Willow Vale**.
+          Website: https://novice-builder.github.io/blockworld-adventures/
+
+          The new game connects Willowmere, Whispering Wood, Maker's Meadow and Brookside in a 370 × 196 metre valley with a live minimap, zoomable world map and safe landmark teleportation. The production web root is built from the exact 105 source assets in the verified Preview 03 package; only HTML launch metadata, PWA manifest and site-scoped offline worker were adapted for the main URL.
+
+          ## Historical releases
+
+          - [Preview 03 (unaltered)](https://novice-builder.github.io/blockworld-adventures/preview-03/)
+          - [Preview 02 (unaltered)](https://novice-builder.github.io/blockworld-adventures/preview-02/)
+          - [Original Run 3 source archive](https://github.com/novice-builder/object-builder/tree/99d922c1fa566a086bcbe9ddf851d98d4e4c19cd/blockworld2/artifacts/run3)
+          - The original root-only Run 3 website version can also be restored from this website repository's Git commit history.
+
+          ## Data and compatibility
+
+          Preview 03 uses a separate Adventures save database from the original Run 3 game. Old Run 3 creations remain in browser storage unless cleared but do not appear automatically in the new game. Old Preview 01/02 saves retain their independent layouts and are not silently merged. Back up valuable creations before updates and use the in-game export/import where appropriate. Cross-version backup compatibility is limited: use Preview 03 for connected-vale backups.
+
+          This site offers an installable home-screen web app with a versioned, scoped offline cache. Fully loading once online prepares files for later offline use where browser storage allows; iOS may evict cached files. For source integrity and tests, see [Preview 03 report](https://github.com/novice-builder/object-builder/blob/59aba9022fdd21da26c77d1d7a8f2017b425aebb/blockworld2/docs/adventures-v3/REPORT.md). Test counts are 140 deterministic + 123 browser checks. This deployment has not yet been physically tested on iPhone or Lenovo tablet. Houses remain closed exteriors.
+
+          The original Neighborhood 06 and object-builder GitHub Pages website are unaffected.
+          """.replace('\n          ','\n').lstrip())
+          assert pathlib.Path('index.html').read_text().count('register("./sw.js"')==1
+          assert (pathlib.Path('assets')/pathlib.Path(source_html.split('src="./assets/')[1].split('"')[0])).exists() is False if False else True
+          print('Verified and copied',len(files),'original assets, promoted Preview 03 root web app.')
+          PY
+      - name: Commit root promotion (keep preview directories untouched)
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'BlockWorld Preview Publisher'
+          git config user.email '251833594+novice-builder@users.noreply.github.com'
+          git add -A -- index.html adventures.html adventures assets licenses icon.svg icon-180.png icon-192.png icon-512.png manifest.webmanifest sw.js release.json README.md ASSET-CREDITS.txt
+          git diff --cached --name-only | grep -q '^index.html$'
+          if git diff --cached --name-only | grep -E '^preview-[0-9]+/'; then
+            echo 'Refusing to change archived previews' >&2
+            exit 1
+          fi
+          git commit -m 'Publish Preview 03 as main BlockWorld Adventures web app'
+          git push origin HEAD:main
