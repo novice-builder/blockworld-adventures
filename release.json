@@ -1,8 +1,9 @@
 {
-  "build": "adventures-main-preview03-eb7003e",
-  "release": "Preview 03 \u2014 Willow Vale",
-  "sourceCommit": "eb7003e7fca9273882e1acf9af798b457a3a4bf5",
-  "archiveCommit": "59aba9022fdd21da26c77d1d7a8f2017b425aebb",
-  "assetCount": 105,
-  "deployedAs": "main website, with Preview 02/03 unchanged"
+  "build": "adventures-main-preview06-c90159ee",
+  "release": "Preview 06",
+  "sourceCommit": "c90159ee50070790d40027166bc99738e000958c",
+  "archiveCommit": "e4fcdcffe2313ff98ec8a57e745e908a56152ba8",
+  "assetCount": 124,
+  "website": "https://novice-builder.github.io/blockworld-adventures/",
+  "previousPreviewsPreserved": true
 }
