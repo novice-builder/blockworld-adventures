@@ -1,0 +1,38 @@
+name: Promote Preview 06 to Main Game
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/promote-preview-06.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download immutable Preview 06 archive and manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL="https://raw.githubusercontent.com/novice-builder/object-builder/e4fcdcffe2313ff98ec8a57e745e908a56152ba8/blockworld2/artifacts/adventures-v6"
+          curl --fail --location --retry 3 --silent --show-error "$URL/BlockWorld-Adventures-Preview-06.zip" -o /tmp/blockworld-preview06.zip
+          curl --fail --location --retry 3 --silent --show-error "$URL/BUILD.json" -o /tmp/blockworld-preview06-build.json
+      - name: Verify full release and promote to root
+        run: python3 .github/scripts/promote_preview_06.py
+      - name: Commit and push updated main site
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "BlockWorld Preview Publisher"
+          git config user.email "251833594+novice-builder@users.noreply.github.com"
+          git add -A -- index.html adventures.html adventures assets licenses icon.svg icon-180.png icon-192.png icon-512.png manifest.webmanifest sw.js release.json README.md ASSET-CREDITS.txt preview-06
+          git diff --cached --name-only | grep -q '^index.html$'
+          if git diff --cached --name-only | grep -E '^preview-(02|03)/'; then
+            echo "Historical preview changed; aborting." >&2
+            exit 1
+          fi
+          git commit -m "Publish verified Preview 06 as main BlockWorld Adventures website"
+          git push origin HEAD:main
