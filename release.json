@@ -1,9 +1,9 @@
 {
-  "build": "adventures-main-preview06-c90159ee",
-  "release": "Preview 06",
-  "sourceCommit": "c90159ee50070790d40027166bc99738e000958c",
-  "archiveCommit": "e4fcdcffe2313ff98ec8a57e745e908a56152ba8",
-  "assetCount": 124,
+  "build": "adventures-main-preview10-6ac4edfe",
+  "release": "Preview 10",
+  "sourceCommit": "6ac4edfe9e79ee71cfa815ab6ff06e1ed0075613",
+  "archiveCommit": "3dcd4f630006fd00f5631d362ce9cc20da8a595c",
+  "assetCount": 131,
   "website": "https://novice-builder.github.io/blockworld-adventures/",
   "previousPreviewsPreserved": true
 }

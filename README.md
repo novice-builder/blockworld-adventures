@@ -2,16 +2,16 @@
 
 **Build anything. Explore everywhere.**
 
-Main site: https://novice-builder.github.io/blockworld-adventures/
+Main game: https://novice-builder.github.io/blockworld-adventures/
 
-The main game now runs **Preview 06** built from verified source `c90159ee50070790d40027166bc99738e000958c`. It includes the joined Willow Vale, maps and landmark travel, a usable furnished lodge, standard controller input and safer object-placement tools. This website is installable and has a versioned offline cache.
+The main game runs **Preview 10** based on source `6ac4edfe9e79ee71cfa815ab6ff06e1ed0075613`. Willow Vale now includes Reedbank and its mill, plus furnished building interiors, fade transitions, walkable staircases, upstairs bedrooms and rooms. Maps and Xbox-compatible browser gamepad controls are retained. Main-site offline caching is versioned.
 
-Existing preview directories remain available and unchanged:
-- [Preview 02](https://novice-builder.github.io/blockworld-adventures/preview-02/)
-- [Preview 03](https://novice-builder.github.io/blockworld-adventures/preview-03/)
-- [Preview 06](https://novice-builder.github.io/blockworld-adventures/preview-06/)
-- [Original Run 3 source](https://github.com/novice-builder/object-builder/tree/99d922c1fa566a086bcbe9ddf851d98d4e4c19cd/blockworld2/artifacts/run3)
+Earlier playable previews remain at:
+- https://novice-builder.github.io/blockworld-adventures/preview-02/
+- https://novice-builder.github.io/blockworld-adventures/preview-03/
+- https://novice-builder.github.io/blockworld-adventures/preview-06/
+- https://novice-builder.github.io/blockworld-adventures/preview-10/
 
-Saved worlds belong to the browser origin and Adventures save database. Older Run 3 saves do not automatically appear in the newer game. Different Preview 01/02 layouts remain separate; no destructive migration is performed. Export backups before updates.
+Save records remain browser- and version-specific, with no destructive migration. Export backups before upgrades, and use Preview 10 or newer for layout-6 backups. Older Run 3 source remains archived in object-builder.
 
-Package integrity: 124 runtime files checked against SHA256 manifest and verified archive. Physical iPhone, Lenovo and Xbox Bluetooth controller behaviour remains unverified. The original Neighborhood 06 website and original source repository remain untouched.
+Package integrity: 131 runtime files verified against original SHA256 manifest; 182 deterministic tests, 72 browser checks and 25 package checks passed upstream. Physical iPhone/Lenovo/Xbox tests are unverified. The original Neighborhood 06 website is unaffected.
